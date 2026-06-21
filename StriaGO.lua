@@ -7,16 +7,15 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local IsMobile = UserInputService.TouchEnabled
 
--- Fallback parent: CoreGui preferred, PlayerGui if blocked
-local screenParent = CoreGui
+-- Determine parent: PlayerGui preferred, CoreGui only if explicitly allowed
+local screenParent = playerGui
 local ok = pcall(function()
     local test = Instance.new("ScreenGui")
     test.Parent = CoreGui
     test:Destroy()
 end)
-if not ok then
-    screenParent = playerGui
-    warn("[StriaGO] CoreGui blocked, using PlayerGui")
+if ok and not IsMobile then
+    screenParent = CoreGui
 end
 
 -- StriaGO Theme
@@ -41,15 +40,8 @@ local gui = Instance.new("ScreenGui")
 gui.Name = "StriaGO"
 gui.Parent = screenParent
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.Enabled = false
-
--- Separate ScreenGui for open button (always visible)
-local openGui = Instance.new("ScreenGui")
-openGui.Name = "StriaGO_Open"
-openGui.Parent = screenParent
-openGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-openGui.Enabled = true
-openGui.ResetOnSpawn = false
+gui.Enabled = true
+gui.ResetOnSpawn = false
 
 local main = Instance.new("Frame")
 main.Name = "Main"
@@ -61,6 +53,7 @@ main.Active = true
 main.Draggable = true
 main.Parent = gui
 main.ClipsDescendants = true
+main.Visible = false
 
 local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
@@ -167,7 +160,7 @@ closeCorner.CornerRadius = UDim.new(0, 6)
 closeCorner.Parent = closeBtn
 
 closeBtn.MouseButton1Click:Connect(function()
-    gui.Enabled = false
+    main.Visible = false
 end)
 
 -- Hover effects on close
@@ -203,11 +196,11 @@ padding.Parent = scroll
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
-        gui.Enabled = not gui.Enabled
+        main.Visible = not main.Visible
     end
 end)
 
--- Open button
+-- Open button (always visible, toggles main frame)
 local openBtn = Instance.new("TextButton")
 openBtn.Size = UDim2.new(0, 145, 0, 32)
 openBtn.Position = UDim2.new(0, 10, 1, -42)
@@ -218,7 +211,7 @@ openBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 openBtn.TextSize = 12
 openBtn.Font = theme.Font
 openBtn.BorderSizePixel = 0
-    openBtn.Parent = openGui
+openBtn.Parent = gui
 
 local openCorner = Instance.new("UICorner")
 openCorner.CornerRadius = UDim.new(0, 8)
@@ -237,7 +230,7 @@ openBtn.MouseLeave:Connect(function()
     TweenService:Create(openBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.15}):Play()
 end)
 openBtn.MouseButton1Click:Connect(function()
-    gui.Enabled = true
+    main.Visible = true
 end)
 
 -- ============== UI COMPONENTS ==============
@@ -713,10 +706,9 @@ task.spawn(function()
 end)
 
 -- Ensure GUI shows even if something went wrong
+main.Visible = true
 updateStatus("Ready")
 updateEventStatus("None")
-gui.Enabled = true
-openGui.Enabled = true
 end)
 
 if not ok then
