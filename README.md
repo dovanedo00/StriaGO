@@ -34,7 +34,7 @@
 ### Loader (one-liner)
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/dovanedo/StriaGO/main/StriaGO.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/dovanedo00/StriaGO/master/StriaGO.lua"))()
 ```
 
 ### Direct execution
