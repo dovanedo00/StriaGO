@@ -1,0 +1,25 @@
+# Roblox
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.qodo/
+.vscode/
+.idea/
+*.suo
+*.sln
+
+# Temp
+*.log
+tmp/
+temp/
+
+# Git
+.git/
