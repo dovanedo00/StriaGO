@@ -5,11 +5,15 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
+-- Wait for player to fully load
+repeat task.wait() until game:GetService("Players").LocalPlayer
 local player = Players.LocalPlayer
-if not player then
-    player = Players.PlayerAdded:Wait()
+local playerGui = player:WaitForChild("PlayerGui", 10)
+if not playerGui then
+    playerGui = Instance.new("ScreenGui")
+    playerGui.Name = "StriaGO_Fallback"
+    playerGui.Parent = game:GetService("CoreGui")
 end
-local playerGui = player:WaitForChild("PlayerGui")
 
 -- ============== THEME ==============
 local theme = {
@@ -111,8 +115,11 @@ local function buildGUI()
     Instance.new("UIPadding", scroll).PaddingTop = UDim.new(0, 4)
 
     -- Update canvas on layout change
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    pcall(function()
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            local s = layout.AbsoluteContentSize
+            scroll.CanvasSize = UDim2.new(0, 0, 0, s.Y + 10)
+        end)
     end)
 
     -- Open button
@@ -144,7 +151,28 @@ local function buildGUI()
     return gui, main, scroll, layout
 end
 
-local gui, main, scroll, layout = buildGUI()
+local gui, main, scroll, layout
+local buildOk, buildErr = pcall(function()
+    gui, main, scroll, layout = buildGUI()
+end)
+if not buildOk then
+    warn("[StriaGO] GUI build error: " .. tostring(buildErr))
+    -- Emergency fallback: simple text label
+    local fb = Instance.new("ScreenGui")
+    fb.Name = "StriaGO_Fallback"
+    fb.Parent = playerGui
+    fb.Enabled = true
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 200, 0, 30)
+    lbl.Position = UDim2.new(0.5, -100, 0, 50)
+    lbl.Text = "StriaGO loaded (error in GUI)"
+    lbl.TextColor3 = Color3.fromRGB(255, 140, 50)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 16
+    lbl.Parent = fb
+    return -- stop here if GUI failed
+end
 
 -- ============== UI HELPERS ==============
 local function CreateLabel(text, isHeader)
@@ -546,7 +574,9 @@ task.spawn(function()
 end)
 
 -- ============== ACTIVATE ==============
-main.Visible = true
-updateStatus("Active")
-updateEvent("None")
-warn("[StriaGO] Loaded successfully!")
+pcall(function()
+    main.Visible = true
+    updateStatus("Active")
+    updateEvent("None")
+end)
+warn("[StriaGO] Loaded successfully! GUI at: " .. tostring(gui) .. " | Main: " .. tostring(main))
