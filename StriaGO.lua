@@ -7,6 +7,18 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local IsMobile = UserInputService.TouchEnabled
 
+-- Fallback parent: CoreGui preferred, PlayerGui if blocked
+local screenParent = CoreGui
+local ok = pcall(function()
+    local test = Instance.new("ScreenGui")
+    test.Parent = CoreGui
+    test:Destroy()
+end)
+if not ok then
+    screenParent = playerGui
+    warn("[StriaGO] CoreGui blocked, using PlayerGui")
+end
+
 -- StriaGO Theme
 local theme = {
     Main = Color3.fromRGB(18, 18, 25),
@@ -27,9 +39,17 @@ local Settings = {}
 -- ============== GUI BUILDER ==============
 local gui = Instance.new("ScreenGui")
 gui.Name = "StriaGO"
-gui.Parent = CoreGui
+gui.Parent = screenParent
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Enabled = false
+
+-- Separate ScreenGui for open button (always visible)
+local openGui = Instance.new("ScreenGui")
+openGui.Name = "StriaGO_Open"
+openGui.Parent = screenParent
+openGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+openGui.Enabled = true
+openGui.ResetOnSpawn = false
 
 local main = Instance.new("Frame")
 main.Name = "Main"
@@ -198,7 +218,7 @@ openBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 openBtn.TextSize = 12
 openBtn.Font = theme.Font
 openBtn.BorderSizePixel = 0
-openBtn.Parent = gui
+    openBtn.Parent = openGui
 
 local openCorner = Instance.new("UICorner")
 openCorner.CornerRadius = UDim.new(0, 8)
@@ -364,6 +384,9 @@ end)
 CreateLabel("", true)
 local statusLabel = CreateLabel("Status: Loading...")
 local eventStatusLabel = CreateLabel("Event: None")
+
+-- Wrap feature code in pcall so GUI always shows even if something fails
+local ok, setupErr = pcall(function()
 
 -- ============== HELPERS ==============
 local function updateStatus(text)
@@ -689,7 +712,13 @@ task.spawn(function()
     end
 end)
 
--- ============== START ==============
+-- Ensure GUI shows even if something went wrong
 updateStatus("Ready")
 updateEventStatus("None")
 gui.Enabled = true
+openGui.Enabled = true
+end)
+
+if not ok then
+    warn("[StriaGO] Setup error: " .. tostring(setupErr))
+end
