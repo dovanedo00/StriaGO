@@ -51,13 +51,6 @@ Copy the contents of `StriaGO.lua` into your executor and run.
 
 ---
 
-## Files
-
-| File | Description |
-|---|---|
-| `StriaGO.lua` | Main auto-farm script |
-| `PollutedLoader.lua` | Universal loader hub (optional) |
-
 ---
 
 ## Changelog
